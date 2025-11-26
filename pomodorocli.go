@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gopxl/beep"
@@ -11,6 +12,18 @@ import (
 	"github.com/gopxl/beep/speaker"
 	"golang.org/x/term"
 )
+
+const debugMode = false
+
+func clearTerminal() {
+	if !debugMode {
+		fmt.Print("\033[H\033[2J")
+	}
+}
+
+func printGoodbye() {
+	fmt.Print("Thank you for using the application\r\nMore infos at https://github.com/AliMarzouk/Golang-PomodoroCLI\r\n")
+}
 
 func playSoundNotification() {
 	f, err := os.Open("alarm.mp3")
@@ -42,18 +55,24 @@ const (
 	enter
 )
 
-func displayCountDownWithMenu(countDownValue time.Duration, title string, isPaused bool, highlightedOptionP *int) {
-	*highlightedOptionP = (*highlightedOptionP + 3) % 3
+func displayCountDownWithMenu(totalDuration time.Duration, countDownValue time.Duration, title string, isPaused bool, highlightedOptionP *int) {
 	var message string
 	var options []string
 	if isPaused {
 		message = "Timer paused !"
-		options = []string{"Stop", "Resume", "Quit"}
+		options = []string{"Stop (Return to main menu)", "Resume", "Quit"}
 	} else {
 		message = "Timer running ..."
-		options = []string{"Stop", "Pause", "Quit"}
+		options = []string{"Stop (Return to main menu)", "Pause", "Quit"}
 	}
-	fmt.Print("\033[H\033[2J")
+	*highlightedOptionP = (*highlightedOptionP + len(options)) % len(options)
+
+	clearTerminal()
+
+	empty := int(countDownValue) * 10 / int(totalDuration)
+	filled := 10 - empty
+	fmt.Printf("[%v%v] \r\n", strings.Repeat("#", filled), strings.Repeat("-", empty))
+
 	fmt.Printf("[%6s] %v : %v \r\n", countDownValue, title, message)
 	for index, option := range options {
 		if index == *highlightedOptionP {
@@ -78,7 +97,7 @@ func startCountDown(durationInMinutes int, title string, keyInputChannel chan Ke
 
 	highlightedOption := 0
 
-	displayCountDownWithMenu(remainingTime, title, isPaused, &highlightedOption)
+	displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
 
 	for remainingTime > 0 {
 		select {
@@ -106,17 +125,15 @@ func startCountDown(durationInMinutes int, title string, keyInputChannel chan Ke
 			case kill:
 				return true
 			}
-			displayCountDownWithMenu(remainingTime, title, isPaused, &highlightedOption)
+			displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
 		case <-ticker.C:
 			if !isPaused {
 				remainingTime = calculateRemainingTime()
-				displayCountDownWithMenu(remainingTime, title, false, &highlightedOption)
+				displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, false, &highlightedOption)
 			}
 		}
 	}
 	go playSoundNotification()
-
-	ticker.Stop()
 	return false
 }
 
@@ -143,12 +160,13 @@ func readSingleCharacter(keyBoardInputChannel chan KeyboardInput) {
 	}
 }
 
-func printMainMenu(highlightedOption int) {
-	options := []string{"Focus time (25 min)", "Long break (15 min)", "Small break (5 min)"}
+func printMainMenu(highlightedOption *int) {
+	options := []string{"Focus time (25 min)", "Long break (15 min)", "Small break (5 min)", "Quit"}
+	*highlightedOption = (*highlightedOption + len(options)) % len(options)
 
-	fmt.Print("\033[H\033[2J")
+	clearTerminal()
 	for index, option := range options {
-		if index == (highlightedOption+len(options))%len(options) {
+		if index == *highlightedOption {
 			fmt.Print(">>>")
 		} else {
 			fmt.Print("   ")
@@ -159,11 +177,11 @@ func printMainMenu(highlightedOption int) {
 
 func mainMenu(keyBoardInputChannel chan KeyboardInput) {
 	highlightedMainOption := 0
-	defer fmt.Print("Thank you for using the application\r\nMore infos at https://github.com/AliMarzouk\r\n")
+	defer printGoodbye()
 	killed := false
 
 	for !killed {
-		printMainMenu(highlightedMainOption)
+		printMainMenu(&highlightedMainOption)
 		keyPressed := <-keyBoardInputChannel
 		switch keyPressed {
 		case up:
@@ -178,6 +196,8 @@ func mainMenu(keyBoardInputChannel chan KeyboardInput) {
 				killed = startCountDown(15, "Long break", keyBoardInputChannel)
 			case 2:
 				killed = startCountDown(1, "Small break", keyBoardInputChannel)
+			case 3:
+				return
 			}
 		case kill:
 			return
