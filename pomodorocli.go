@@ -19,8 +19,9 @@ const debugMode = false
 var finishedParts = make([]string, 0)
 
 func printFinishedParts() {
+	boldPrinter := color.New(color.Bold)
 	if len(finishedParts) > 0 {
-		fmt.Printf("[[    Progress : %v   ]]\r\n\r\n\r\n", strings.Join(finishedParts, " -> "))
+		boldPrinter.Printf("   Progress :  [[   %v   ]]\r\n\r\n\r\n", strings.Join(finishedParts, " -> "))
 	}
 }
 
@@ -59,7 +60,7 @@ func printGoodbye() {
 			"|   __|___ ___ _| | |_ _ _ ___   |  |\r\n" +
 			"|  |  | . | . | . | . | | | -_|  |__|\r\n" +
 			"|_____|___|___|___|___|_  |___|  |__|\r\n" +
-			"                      |___|          \r\n")
+			"                      |___|          \r\n\r\n\r\n")
 	fmt.Print("Thank you for using the application\r\nMore infos at https://github.com/AliMarzouk/Golang-PomodoroCLI\r\n")
 }
 
@@ -268,7 +269,7 @@ func main() {
 		switch mainMenu(keyBoardInputChannel) {
 		case 0:
 			killed = startCountDown(25, "Focus time", keyBoardInputChannel)
-			finishedParts = append(finishedParts, "Focus")
+			finishedParts = append(finishedParts, "Focus time")
 		case 1:
 			killed = startCountDown(15, "Long break", keyBoardInputChannel)
 			finishedParts = append(finishedParts, "Long break")
