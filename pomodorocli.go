@@ -15,6 +15,31 @@ import (
 
 const debugMode = false
 
+var finishedParts = make([]string, 0)
+
+func printFinishedParts() {
+	if len(finishedParts) > 0 {
+		fmt.Printf("[[    Progress : %v   ]]\r\n\r\n\r\n", strings.Join(finishedParts, " -> "))
+	}
+}
+
+func printWelcome() {
+	clearTerminal()
+	fmt.Println(
+
+		"\n,----.    ,-----. ,--.     ,---.  ,--.  ,--. ,----.                                                " +
+			"\n'  .-./   '  .-.  '|  |    /  O  \\ |  ,'.|  |'  .-./                                               " +
+			"\n|  | .---.|  | |  ||  |   |  .-.  ||  |' '  ||  | .---.                                            " +
+			"\n'  '--'  |'  '-'  '|  '--.|  | |  ||  | `   |'  '--'  |                                            " +
+			"\n `------'  `-----' `-----'`--' `--'`--'  `--' `------'                                             " +
+			"\n,------.  ,-----. ,--.   ,--. ,-----. ,------.   ,-----. ,------.  ,-----.      ,-----.,--.   ,--. " +
+			"\n|  .--. ''  .-.  '|   `.'   |'  .-.  '|  .-.  \\ '  .-.  '|  .--. ''  .-.  '    '  .--./|  |   |  | " +
+			"\n|  '--' ||  | |  ||  |'.'|  ||  | |  ||  |  \\  :|  | |  ||  '--'.'|  | |  |    |  |    |  |   |  | " +
+			"\n|  | --' '  '-'  '|  |   |  |'  '-'  '|  '--'  /'  '-'  '|  |\\  \\ '  '-'  '    '  '--'\\|  '--.|  | " +
+			"\n`--'      `-----' `--'   `--' `-----' `-------'  `-----' `--' '--' `-----'      `-----'`-----'`--' ")
+	fmt.Print("\r\nWelcome to the Promodoro CLI!\r\n\r\nPress ENTER to continue to the app\r\n\r\n(Press CTRL+C to leave the app)\r\n")
+}
+
 func clearTerminal() {
 	if !debugMode {
 		fmt.Print("\033[H\033[2J")
@@ -22,6 +47,13 @@ func clearTerminal() {
 }
 
 func printGoodbye() {
+	fmt.Print(
+		"                                  __\r\n" +
+			" _____           _ _             |  |\r\n" +
+			"|   __|___ ___ _| | |_ _ _ ___   |  |\r\n" +
+			"|  |  | . | . | . | . | | | -_|  |__|\r\n" +
+			"|_____|___|___|___|___|_  |___|  |__|\r\n" +
+			"                      |___|          \r\n")
 	fmt.Print("Thank you for using the application\r\nMore infos at https://github.com/AliMarzouk/Golang-PomodoroCLI\r\n")
 }
 
@@ -55,7 +87,7 @@ const (
 	enter
 )
 
-func displayCountDownWithMenu(totalDuration time.Duration, countDownValue time.Duration, title string, isPaused bool, highlightedOptionP *int) {
+func printCountDownWithMenu(totalDuration time.Duration, countDownValue time.Duration, title string, isPaused bool, highlightedOptionP *int) {
 	var message string
 	var options []string
 	if isPaused {
@@ -69,11 +101,13 @@ func displayCountDownWithMenu(totalDuration time.Duration, countDownValue time.D
 
 	clearTerminal()
 
+	printFinishedParts()
+
 	empty := int(countDownValue) * 10 / int(totalDuration)
 	filled := 10 - empty
-	fmt.Printf("[%v%v] \r\n", strings.Repeat("#", filled), strings.Repeat("-", empty))
+	fmt.Printf("[%v%v] \r\n\r\n", strings.Repeat("#", filled), strings.Repeat("-", empty))
 
-	fmt.Printf("[%6s] %v : %v \r\n", countDownValue, title, message)
+	fmt.Printf("(%6s) \r\n\r\n%v \r\n%v \r\n\r\n\r\n\r\n", countDownValue, strings.ToUpper(title), message)
 	for index, option := range options {
 		if index == *highlightedOptionP {
 			fmt.Print(">>>")
@@ -97,7 +131,7 @@ func startCountDown(durationInMinutes int, title string, keyInputChannel chan Ke
 
 	highlightedOption := 0
 
-	displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
+	printCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
 
 	for remainingTime > 0 {
 		select {
@@ -125,11 +159,11 @@ func startCountDown(durationInMinutes int, title string, keyInputChannel chan Ke
 			case kill:
 				return true
 			}
-			displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
+			printCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, isPaused, &highlightedOption)
 		case <-ticker.C:
 			if !isPaused {
 				remainingTime = calculateRemainingTime()
-				displayCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, false, &highlightedOption)
+				printCountDownWithMenu(time.Duration(durationInMinutes)*time.Minute, remainingTime, title, false, &highlightedOption)
 			}
 		}
 	}
@@ -165,6 +199,7 @@ func printMainMenu(highlightedOption *int) {
 	*highlightedOption = (*highlightedOption + len(options)) % len(options)
 
 	clearTerminal()
+	printFinishedParts()
 	for index, option := range options {
 		if index == *highlightedOption {
 			fmt.Print(">>>")
@@ -175,37 +210,29 @@ func printMainMenu(highlightedOption *int) {
 	}
 }
 
-func mainMenu(keyBoardInputChannel chan KeyboardInput) {
+func mainMenu(keyBoardInputChannel chan KeyboardInput) int {
 	highlightedMainOption := 0
-	defer printGoodbye()
-	killed := false
 
-	for !killed {
-		printMainMenu(&highlightedMainOption)
-		keyPressed := <-keyBoardInputChannel
+	printMainMenu(&highlightedMainOption)
+	for keyPressed := range keyBoardInputChannel {
 		switch keyPressed {
 		case up:
 			highlightedMainOption -= 1
 		case down:
 			highlightedMainOption += 1
 		case enter:
-			switch highlightedMainOption {
-			case 0:
-				killed = startCountDown(25, "Focus time", keyBoardInputChannel)
-			case 1:
-				killed = startCountDown(15, "Long break", keyBoardInputChannel)
-			case 2:
-				killed = startCountDown(1, "Small break", keyBoardInputChannel)
-			case 3:
-				return
-			}
+			return highlightedMainOption
 		case kill:
-			return
+			return 3
 		}
+		printMainMenu(&highlightedMainOption)
 	}
+	return 3
 }
 
 func main() {
+	printWelcome()
+
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
@@ -213,8 +240,29 @@ func main() {
 		panic(err)
 	}
 
+	defer printGoodbye()
+
 	keyBoardInputChannel := make(chan KeyboardInput)
 	go readSingleCharacter(keyBoardInputChannel)
 
-	mainMenu(keyBoardInputChannel)
+	<-keyBoardInputChannel
+
+	killed := false
+
+	for !killed {
+		switch mainMenu(keyBoardInputChannel) {
+		case 0:
+			killed = startCountDown(25, "Focus time", keyBoardInputChannel)
+			finishedParts = append(finishedParts, "Focus")
+		case 1:
+			killed = startCountDown(15, "Long break", keyBoardInputChannel)
+			finishedParts = append(finishedParts, "Long break")
+		case 2:
+			killed = startCountDown(1, "Small break", keyBoardInputChannel)
+			finishedParts = append(finishedParts, "Small break")
+		case 3:
+			return
+		}
+	}
+
 }
