@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/gopxl/beep"
 	"github.com/gopxl/beep/mp3"
 	"github.com/gopxl/beep/speaker"
@@ -25,7 +26,12 @@ func printFinishedParts() {
 
 func printWelcome() {
 	clearTerminal()
-	fmt.Println(
+	greenPrinter := color.New(color.FgHiGreen)
+	greenPrinter.Add(color.Bold)
+
+	boldPrinter := color.New(color.Bold)
+
+	greenPrinter.Print(
 
 		"\n,----.    ,-----. ,--.     ,---.  ,--.  ,--. ,----.                                                " +
 			"\n'  .-./   '  .-.  '|  |    /  O  \\ |  ,'.|  |'  .-./                                               " +
@@ -36,8 +42,8 @@ func printWelcome() {
 			"\n|  .--. ''  .-.  '|   `.'   |'  .-.  '|  .-.  \\ '  .-.  '|  .--. ''  .-.  '    '  .--./|  |   |  | " +
 			"\n|  '--' ||  | |  ||  |'.'|  ||  | |  ||  |  \\  :|  | |  ||  '--'.'|  | |  |    |  |    |  |   |  | " +
 			"\n|  | --' '  '-'  '|  |   |  |'  '-'  '|  '--'  /'  '-'  '|  |\\  \\ '  '-'  '    '  '--'\\|  '--.|  | " +
-			"\n`--'      `-----' `--'   `--' `-----' `-------'  `-----' `--' '--' `-----'      `-----'`-----'`--' ")
-	fmt.Print("\r\nWelcome to the Promodoro CLI!\r\n\r\nPress ENTER to continue to the app\r\n\r\n(Press CTRL+C to leave the app)\r\n")
+			"\n`--'      `-----' `--'   `--' `-----' `-------'  `-----' `--' '--' `-----'      `-----'`-----'`--' \r\n\r\n")
+	boldPrinter.Print("\r\nWelcome to the Promodoro CLI!\r\n\r\nPress ENTER to continue to the app\r\n\r\n(Press CTRL+C to leave the app)\r\n")
 }
 
 func clearTerminal() {
@@ -99,22 +105,30 @@ func printCountDownWithMenu(totalDuration time.Duration, countDownValue time.Dur
 	}
 	*highlightedOptionP = (*highlightedOptionP + len(options)) % len(options)
 
+	greenPrinter := color.New(color.FgHiGreen)
+	greenPrinter.Add(color.Bold)
+
+	boldPrinter := color.New(color.Bold)
+	yellowPrinter := color.New(color.FgHiYellow)
+	if !isPaused {
+		yellowPrinter.DisableColor()
+	}
+
 	clearTerminal()
 
 	printFinishedParts()
 
 	empty := int(countDownValue) * 10 / int(totalDuration)
 	filled := 10 - empty
-	fmt.Printf("[%v%v] \r\n\r\n", strings.Repeat("#", filled), strings.Repeat("-", empty))
+	boldPrinter.Printf("[%v%v] \r\n\r\n", strings.Repeat("#", filled), strings.Repeat("-", empty))
 
-	fmt.Printf("(%6s) \r\n\r\n%v \r\n%v \r\n\r\n\r\n\r\n", countDownValue, strings.ToUpper(title), message)
+	yellowPrinter.Printf("(%6s) \r\n\r\n%v \r\n%v \r\n\r\n\r\n\r\n", countDownValue, strings.ToUpper(title), message)
 	for index, option := range options {
 		if index == *highlightedOptionP {
-			fmt.Print(">>>")
+			greenPrinter.Printf(">>> %v \r\n", option)
 		} else {
-			fmt.Print("   ")
+			fmt.Printf("   %v\r\n", option)
 		}
-		fmt.Print(option + "\r\n")
 	}
 }
 
@@ -197,16 +211,17 @@ func readSingleCharacter(keyBoardInputChannel chan KeyboardInput) {
 func printMainMenu(highlightedOption *int) {
 	options := []string{"Focus time (25 min)", "Long break (15 min)", "Small break (5 min)", "Quit"}
 	*highlightedOption = (*highlightedOption + len(options)) % len(options)
+	greenPrinter := color.New(color.FgHiGreen)
+	greenPrinter.Add(color.Bold)
 
 	clearTerminal()
 	printFinishedParts()
 	for index, option := range options {
 		if index == *highlightedOption {
-			fmt.Print(">>>")
+			greenPrinter.Printf(">>> %v\r\n", option)
 		} else {
-			fmt.Print("   ")
+			fmt.Printf("   %v\r\n", option)
 		}
-		fmt.Print(option + "\r\n")
 	}
 }
 
