@@ -1,0 +1,43 @@
+# 🍅 Golang - Pomodoro CLI 
+
+This app is a small CLI that lets you set up a timer to use the pomodoro focus technique.
+
+It consists of multiple focus periods seperated by small breaks used to reflect on the work done during the focus time. After 4 focus periods, a long break is taken to rest.
+
+## Installation
+
+### Source
+for this step you should [Download and install Go](https://go.dev/doc/install)
+
+Then,
+
+```bash
+git clone https://github.com/AliMarzouk/Golang-PomodoroCLI
+
+// to run on go
+go run . 
+// or build and run
+go build && ./pomodorocli
+```
+
+### Run binary 
+
+You can download the latest pre-compiled binary form [github releases tab](https://github.com/AliMarzouk/Golang-PomodoroCLI/releases/latest)
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+
+## Roadmap
+The app should evolve into a full TUI where everything is configureable
+
+- Add configuration tab to change sessions' duration.
+- Add track of tasks for each pomodoro session.
+- Publish application to Arch AUR and MacPorts.
+- Create a makefile
+- Add tests
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
