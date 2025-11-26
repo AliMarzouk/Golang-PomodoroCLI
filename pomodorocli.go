@@ -274,7 +274,7 @@ func main() {
 			killed = startCountDown(15, "Long break", keyBoardInputChannel)
 			finishedParts = append(finishedParts, "Long break")
 		case 2:
-			killed = startCountDown(1, "Small break", keyBoardInputChannel)
+			killed = startCountDown(5, "Small break", keyBoardInputChannel)
 			finishedParts = append(finishedParts, "Small break")
 		case 3:
 			return
